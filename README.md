@@ -39,16 +39,22 @@ go build -o electric .
 Allow unauthenticated user to upload log file to be processed
 
 **URL** : `/api/v1/upload`
+
 **Method** : `POST`
+
 **Auth Required** : `NO`
+
 **Permissions required** : `None`
+
 **Data constraints**
+
 formField
 ```
 file=path/to/logfile
 ```
 
 **Header Constraints**
+
 The server is processing the request as a multipart fileupload
 
 ```
