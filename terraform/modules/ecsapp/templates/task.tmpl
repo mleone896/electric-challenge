@@ -1,0 +1,14 @@
+[
+  {
+    "name": "${app_name}",
+    "image": "${repo_url}:${tag}",
+	  "environment": ${env_vars},
+    "essential": true,
+    "mountPoints": ${mount_points},
+    "portMappings": ${port_mappings},
+    "logConfiguration": ${log_config},
+    "command": ${command},
+		"secrets": ${secrets}
+    }
+]
+
