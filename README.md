@@ -18,20 +18,27 @@ docker
 ## Running tests
 
 ```bash
-go mod download
-go test -v .
+$ go mod download
+$ go test -v .
 ```
 
 ## Running The service
 ```bash
-go run .
+$ go run .
 ```
 
 Or if you want to build the binary
 
 ```bash
-go build -o electric .
-./electric
+$ go build -o electric .
+$ ./electric
+```
+
+Building and running in docker
+
+```bash
+$ docker build -t electric:<tag> .
+$ docker run -it -p 8080:8080 electric:<tag>
 ```
 
 # API Documentation
