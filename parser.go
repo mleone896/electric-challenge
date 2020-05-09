@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -77,14 +77,10 @@ func getLine(line string) (Line, error) {
 	return item, nil
 }
 
-func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
+// caller needs to close filehandle
+func readLines(file io.Reader) ([]string, error) {
 	var lines []string
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
@@ -93,7 +89,7 @@ func readLines(path string) ([]string, error) {
 }
 
 // Parse : implement parser interface
-func Parse(file string) ([]Line, error) {
+func Parse(file io.Reader) ([]Line, error) {
 	var entries []Line
 	lines, err := readLines(file)
 	if err != nil {
