@@ -12,8 +12,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// InitRoutes : returns a router with endpoints mounted
 func InitRoutes() *mux.Router {
 	router := mux.NewRouter()
+	router.PathPrefix("/api/v1")
 	router.
 		Path("/upload").
 		Methods("POST").
@@ -23,6 +25,8 @@ func InitRoutes() *mux.Router {
 
 }
 
+// ReceiveFile : HttpHandler that accepts a file parses it and runs calculations
+// on its contents
 func ReceiveFile(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20) // limit your max input length!
 
@@ -73,7 +77,8 @@ func getCounts(contents io.Reader) map[string]int {
 	counts := make(map[string]int)
 
 	for _, line := range lines {
-		counts[line.RemoteHost] += 1
+		//  If we were to run this concurrently I would put a mutex to protect this
+		counts[line.RemoteHost]++
 	}
 
 	return counts
