@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"regexp"
 	"strconv"
 	"time"
@@ -99,7 +98,7 @@ func Parse(file io.Reader) ([]Line, error) {
 	for _, line := range lines {
 		entity, err := getLine(line)
 		if err != nil {
-			log.Println(err)
+			return []Line{}, err
 		} else {
 			entries = append(entries, entity)
 		}

@@ -27,7 +27,7 @@ func TestUploadEndpoint(t *testing.T) {
 	}
 	writer.Close()
 
-	req, _ := http.NewRequest(http.MethodPost, "/upload", &b)
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/upload", &b)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	response := executeRequest(req)
