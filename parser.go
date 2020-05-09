@@ -31,7 +31,7 @@ type Line struct {
 // String : Implement the stringer interface
 func (li *Line) String() string {
 	return fmt.Sprintf(
-		"%s\t%s\t%s\t%d\t%d\t%s\t%s\t%s",
+		"%s\t%s\t%s\t%s\t%s\t%d\t%d",
 		li.RemoteHost,
 		li.Time,
 		li.Method,

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 // A data structure to hold a key/value pair.
@@ -22,11 +20,7 @@ func (p pairList) Len() int           { return len(p) }
 func (p pairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
 
 func main() {
-	router := mux.NewRouter()
-	router.
-		Path("/upload").
-		Methods("POST").
-		HandlerFunc(ReceiveFile)
+	router := InitRoutes()
 
 	fmt.Println("Starting")
 	log.Fatal(http.ListenAndServe(":8080", router))
