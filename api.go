@@ -15,8 +15,8 @@ import (
 // InitRoutes : returns a router with endpoints mounted
 func InitRoutes() *mux.Router {
 	router := mux.NewRouter()
-	router.PathPrefix("/api/v1")
 	router.
+		PathPrefix("/api/v1").
 		Path("/upload").
 		Methods("POST").
 		HandlerFunc(ReceiveFile)

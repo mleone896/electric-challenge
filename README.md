@@ -64,5 +64,5 @@ Content-type: multipart/form-data
 Example with curl from cli
 
 ```bash
-curl -X POST -H "Content-Type: multipart/form-data" http://localhost:8080/upload -F "file=@./fixtures/electric.log"
+curl -X POST -H "Content-Type: multipart/form-data" http://localhost:8080/api/v1/upload -F "file=@./fixtures/electric.log"
 ```
