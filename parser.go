@@ -57,8 +57,7 @@ func getTime(timestamp string) time.Time {
 	return res
 }
 
-// first iteration isn't going to make use of it but put get line into
-// its own method so that we can take advantage of channels
+// getLine : process a log line and populate struct with parsed output
 func getLine(line string) (Line, error) {
 
 	regex := regexp.MustCompile(`(?P<remote_ip>\S*)\s-\s(?P<requesting_user>\S*)\s\[(?P<Timestamp>.*?)\]\s\"(?P<Method>\S*)\s*(?P<Request>\S*)\s*(HTTP\/)*(?P<http_version>.*?)\"\s(?P<response_code>\d{3})\s(?P<Size>\S*)`)
