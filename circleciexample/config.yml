@@ -1,0 +1,153 @@
+only-master: &only-master
+  filters:
+    branches:
+      only: master
+
+attach_workspace: &attach_workspace
+  attach_workspace:
+    at: ./
+
+version: 2.1
+orbs:
+  aws-ecr: circleci/aws-ecr@6.7.0
+  aws-ecs: circleci/aws-ecs@1.1.0
+  aws-cli: circleci/aws-cli@0.1.13
+  go: circleci/go@1.1.2
+
+executors:
+  build:
+    docker:
+      - image: cmig/go:1.14
+  aws:
+    docker:
+      - image: circleci/python:3.7.1
+
+parameters:
+  deploy_to_prod:
+    type: boolean
+    default: false
+  application_name:
+    type: string
+    default: electirc-log-counts
+
+commands:
+  promote-ecr-image:
+    description: |
+      Tags an ecr docker image by tag and tags it with production
+    parameters:
+      account-url:
+        default: AWS_ECR_ACCOUNT_URL
+        description: |
+          Env var storing amazon ECR account URL that maps to account
+        type: env_var_name
+      aws-access-key-id:
+        default: AWS_ACCESS_KEY_ID
+        description: |
+          AWS access key id for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. AWS_ACCESS_KEY.
+        type: env_var_name
+      aws-secret-access-key:
+        default: AWS_SECRET_ACCESS_KEY
+        description: |
+          AWS secret key for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. AWS_SECRET_ACCESS_KEY.
+        type: env_var_name
+      pull-tag:
+        default: staging
+        description: A comma-separated string containing docker image tags to pull from ecr and push (default = staging)
+        type: string
+      push-tag:
+        default: production
+        description: A comma-separated string containing docker image tags to push to ecr and push (default = production)
+        type: string
+      repo:
+        description: Name of an Amazon ECR repository
+        type: string
+      region:
+        default: AWS_REGION
+        description: |
+          Name of env var storing your AWS region information, defaults to AWS_REGION
+        type: env_var_name
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: <<parameters.aws-access-key-id>>
+          aws-region: <<parameters.region>>
+          aws-secret-access-key: <<parameters.aws-secret-access-key>>
+      - aws-ecr/ecr-login:
+          region: <<parameters.region>>
+      - run:
+          name: Promote staging tag to production tag
+          command: |
+            docker pull $<<parameters.account-url>>/<<parameters.repo>>:<<parameters.pull-tag>>
+            docker tag $<<parameters.account-url>>/<<parameters.repo>>:<<parameters.pull-tag>> $<<parameters.account-url>>/<<parameters.repo>>:<<parameters.push-tag>>
+            docker push $<<parameters.account-url>>/<<parameters.repo>>:<<parameters.push-tag>>
+
+workflows:
+  version: 2.1
+  build:
+    unless: << pipeline.parameters.deploy_to_prod >>
+    jobs:
+      - test:
+          context: application_secrets
+      - aws-ecr/build-and-push-image:
+          name: build_and_push
+          executor: build
+          repo: electric/<<pipeline.parameters.application_name>>
+          setup-remote-docker: true
+          tag: "$(git log --pretty=format:'%ad' --date=iso -n 1| awk '{print $1}'|tr '-' '.')-$CIRCLE_BUILD_NUM,$(echo $CIRCLE_SHA1|cut -c -7),staging"
+          context: application_secrets
+          <<: *only-master
+          requires:
+            - test
+      - aws-ecs/deploy-service-update:
+          name: stage_deploy_http
+          family: staging-<<pipeline.parameters.application_name>>
+          context: application_secrets
+          service-name: << pipeline.parameters.application_name>>
+          cluster-name: staging
+          verify-revision-is-deployed: true
+          container-image-name-updates: "container=<<pipeline.parameters.application_name>>,tag=staging"
+          <<: *only-master
+          requires:
+            - build_and_push
+  deploy:
+    when: << pipeline.parameters.deploy_to_prod >>
+    jobs:
+      - promote-prod:
+          context: application_secrets
+      - aws-ecs/deploy-service-update:
+          name: prod_deploy_http
+          family: production-<<pipeline.parameters.application_name>>
+          context: application_secrets
+          service-name: << pipeline.parameters.application_name>>
+          cluster-name: production
+          verify-revision-is-deployed: true
+          container-image-name-updates: "container=<< pipeline.parameters.application_name>>,tag=production"
+          requires:
+            - promote-prod
+
+
+jobs:
+  test:
+    executor:
+      name: go/default
+      tag: '1.14'
+    steps:
+      - checkout
+      - go/load-cache
+      - go/mod-download
+      - go/save-cache
+      - go/test:
+          covermode: atomic
+          failfast: true
+          race: true
+
+  promote-prod:
+    executor: aws
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - promote-ecr-image:
+          repo: electric/<<pipeline.parameters.application_name>>
+
+
+
